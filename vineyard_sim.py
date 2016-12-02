@@ -108,12 +108,13 @@ class Vineyard(object):
 		#legend
 		df=self.fig.colorbar(sc,fraction=0.046, pad=0.04)
 		df.ax.set_yticklabels(['slow','','','','','','','fast'])
-
 		df.set_label('soil drainage', rotation=270)
 
 		#plt.tight_layout()
 		self.ind=0
 		
+
+	
 	def update(self,i):
 		# self.leaf_num=self.leaf_num+5
 		#self.soil_moisture=self.soil_moisture-self.drainage_rate+self.irrigation_rate
