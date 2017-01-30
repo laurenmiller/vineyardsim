@@ -33,13 +33,15 @@ class Plant(object):
 		self.leaf_size=5 #size of each leaf for plotting
 		self.leaf_num=5  #number of leaves to add each time the plant grows
 		self.growth_ratio=2*np.array([[.1, 0], [0, .2]])
-		self.leaf_positions = np.random.multivariate_normal(self.position, self.soil_moisture*self.growth_ratio, self.leaf_num)
+		self.leaf_positions = np.random.multivariate_normal(self.position,
+                                                                    self.soil_moisture*self.growth_ratio, self.leaf_num)
 		self.color()
 
 	def grow(self,irrigation_rate,drainage_rate):
 		self.soil_moisture=self.soil_moisture+irrigation_rate-drainage_rate
 		if self.soil_moisture>=0:
-			newleaves = np.random.multivariate_normal(self.position, self.soil_moisture*self.growth_ratio, self.leaf_num)
+			newleaves = np.random.multivariate_normal(self.position,
+                                                                  self.soil_moisture*self.growth_ratio, self.leaf_num)
 			self.leaf_positions=np.vstack((self.leaf_positions,newleaves))
 		else:
 			self.soil_moisture=0
@@ -61,7 +63,7 @@ class Vineyard(object):
 		# Create new Figure and an Axes which fills it.
 		self.bounds=[[0,100],[0,100]]
 		self.fig = plt.figure(figsize=(10, 5))
-		gs = gridspec.GridSpec(1, 2,width_ratios=[1,1.1])
+		gs = gridspec.GridSpec(1, 2,width_ratios=[1.1,1])
 		self.ax1 = plt.subplot(gs[0])
 		self.ax2 = plt.subplot(gs[1])
 		#self.ax1=self.fig.add_subplot(121)
@@ -73,7 +75,6 @@ class Vineyard(object):
 		self.ax1.set_ylim(-10, self.bounds[1][1]+10), self.ax1.set_yticks([])
 		self.ax2.set_xlim(-10, self.bounds[0][1]+10), self.ax2.set_xticks([])
 		self.ax2.set_ylim(-10, self.bounds[1][1]+10), self.ax2.set_yticks([])
-		self.ax1.set_axis_bgcolor((152/256.0, 107/256.0, 73/256.0))
 
 		# Initialize the plants on a grid
 		nx, ny = (10, 20)
@@ -89,12 +90,12 @@ class Vineyard(object):
 		#each vine as it's own irrigation rate
 		
 		#constant irrigation
-		#self.irrigation_rate = 2*np.ones(self.vine_positions.shape[0])
+		self.irrigation_rate = 1.5*np.ones(self.vine_positions.shape[0])
 		
 		#optimal irrigation
 		self.irrigation_rate =1*np.ones(self.vine_positions.shape[0])+self.drainage_rate
 		
-		#initialize the starting oil moisture level
+		#initialize the starting soil moisture level
 		init_soilmoisture=1
 
 		#create vines
@@ -103,18 +104,26 @@ class Vineyard(object):
 			self.vines.append(Plant(pos,init_soilmoisture))
 
 		#set up some plotting stuff
-		dr= self.drainage_rate.reshape(20,10)
-		sc=self.ax2.imshow(np.flipud(dr),cmap=plt.get_cmap('BrBG_r'),extent=(0, self.bounds[0][1],0, self.bounds[1][1]))
-		#legend
-		df=self.fig.colorbar(sc,fraction=0.046, pad=0.04)
-		df.ax.set_yticklabels(['slow','','','','','','','fast'])
 
-		df.set_label('soil drainage', rotation=270)
+                # set background color for field
+                self.ax2.set_axis_bgcolor((152/256.0, 107/256.0, 73/256.0))
+
+                #plot drainage map
+		dr= self.drainage_rate.reshape(20,10)
+		#sc=self.ax1.imshow(np.flipud(dr),cmap=plt.get_cmap('YlOrRd'),extent=(
+        #            0, self.bounds[0][1],0, self.bounds[1][1]))
+                
+		#legend
+		#df=self.fig.colorbar(sc, ax = self.ax1,fraction=0.046, pad=0.04)
+		#df.ax.set_yticklabels(['normal','','','','','','rapid'])
+
+		#df.set_label('soil drainage', rotation=270)
 
 		#plt.tight_layout()
 		self.ind=0
 		
 	def update(self,i):
+		print i
 		# self.leaf_num=self.leaf_num+5
 		#self.soil_moisture=self.soil_moisture-self.drainage_rate+self.irrigation_rate
 
@@ -138,21 +147,26 @@ class Vineyard(object):
 			sizes.append(vine.leaf_size)
 			moistures.append(vine.soil_moisture)
 		#print leafpositions.shape
-		scat1 = self.ax1.scatter(leafpositions[:, 0], leafpositions[:, 1],
-		                  	s=sizes,  edgecolors=colors,
-		                  	facecolors=colors
-		                  	)
-		scat2 = self.ax2.scatter(vinepositions[:,0],vinepositions[:,1],
-		                  	s=5*self.irrigation_rate,  edgecolors='blue',
+
+                #normalize the irrigation rate for plotting
+                irr=self.irrigation_rate**2/max(self.irrigation_rate**2)
+                scat1 = self.ax1.scatter(vinepositions[:,0],vinepositions[:,1],
+		                  	s=10*irr,  edgecolors='blue',
 		                  	facecolors='blue'
 		                  	)
 
+		scat2 = self.ax2.scatter(leafpositions[:, 0], leafpositions[:, 1],
+		                  	s=sizes,  edgecolors=colors,
+		                  	facecolors=colors
+		                  	)
+
 		self.ind=self.ind+1
-		#pt.savefig('img'+str(self.ind)+'.png',dpi=1000)
+		print 'dd'
+		plt.savefig('irr_opt_img'+str(self.ind)+'.png',dpi=1000)
 
 	def animate(self):
 		anim=FuncAnimation(self.fig, self.update)
-		anim.save('optimal_irrigation.mp4', fps=20,bitrate=100000)
+		anim.save('constant_irrigation2.mp4', fps=10,bitrate=100000)
 		print 'done saving'
 		#plt.show()
 
